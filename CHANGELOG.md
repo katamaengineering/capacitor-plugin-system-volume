@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.2
+
+- Fix: the slider no longer scrolls out of view and drags now register. The
+  mount container is `overflow: scroll` only so WebKit will materialise it; it was
+  left actually scrollable, so a vertical drag slid the native slider out of view
+  ("it disappears") and the scroll gesture stole horizontal drags from the
+  `UISlider`. Scrolling on the container is now disabled (and re-asserted on
+  every layout sync). Supersedes the partial 0.1.1 touch-flag fix.
+
 ## 0.1.1
 
 - Fix: dragging the slider now works. The slider is mounted inside the webview's

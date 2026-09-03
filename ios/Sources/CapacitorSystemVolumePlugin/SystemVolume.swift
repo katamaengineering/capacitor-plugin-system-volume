@@ -99,6 +99,13 @@ final class SystemVolume: NSObject {
 
     func updateRender(rect: CGRect) {
         runOnMain {
+            // WebKit can re-enable scrolling on the container across relayouts, so
+            // re-assert it every sync — otherwise a later drag scrolls the slider
+            // out of view again.
+            if let scrollView = self.targetView as? UIScrollView {
+                scrollView.isScrollEnabled = false
+                scrollView.contentOffset = .zero
+            }
             let widthEqual = round(Double(self.volumeView.bounds.width)) == round(Double(rect.width))
             let heightEqual = round(Double(self.volumeView.bounds.height)) == round(Double(rect.height))
             if !widthEqual || !heightEqual {
@@ -144,12 +151,17 @@ final class SystemVolume: NSObject {
                 let widthEqual = width == refWidth
                 let heightEqual = floor(height / 2) == refHeight || ceil(height / 2) == refHeight
                 if widthEqual && heightEqual && item.tag < (self.targetView?.tag ?? SystemVolume.sliderTag) {
-                    // The slider is a UISlider, which tracks touches directly. A
-                    // UIScrollView delays content touches and cancels them the
-                    // moment it reads a drag as a scroll, which steals every drag
-                    // from the slider. Turn both off so drags reach the slider.
+                    // The element is `overflow: scroll` ONLY so WebKit materialises
+                    // this child scroll view for the native slider to mount into —
+                    // it must not actually scroll. Left scrollable, a vertical drag
+                    // slides the slider up out of view (looks like it vanishes),
+                    // and the scroll gesture steals the slider's own drag. Disable
+                    // scrolling and let the UISlider own every touch.
+                    scrollView.isScrollEnabled = false
                     scrollView.delaysContentTouches = false
                     scrollView.canCancelContentTouches = false
+                    // Pin the content so a stray offset can't hide the slider.
+                    scrollView.contentOffset = .zero
                     return item
                 }
             }
