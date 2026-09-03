@@ -20,10 +20,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pjaudiomv/capacitor-plugin-system-volume.git"
+    "url": "git+https://github.com/katamaengineering/capacitor-plugin-system-volume.git"
   },
   "bugs": {
-    "url": "https://github.com/pjaudiomv/capacitor-plugin-system-volume/issues"
+    "url": "https://github.com/katamaengineering/capacitor-plugin-system-volume/issues"
   },
   "keywords": [
     "capacitor",
