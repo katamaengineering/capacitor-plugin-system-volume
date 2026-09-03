@@ -1,62 +1,6 @@
 import Foundation
 import UIKit
-import WebKit
 import Capacitor
-
-// MARK: - View-tree + touch-routing helpers
-//
-// The compositing glue that mounts a native view into the WKWebView's view tree
-// and routes touches down to it. Ported from @capacitor/google-maps via
-// capacitor-plugin-apple-maps — the same trick both use to overlay a native
-// view on the webview.
-
-// MARK: - WKWebView touch routing
-//
-// Routes touches that land on a WKChildScrollView down to the native view
-// mounted inside it (without this the slider would receive no drags).
-extension WKWebView {
-    override open func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        var hitView = super.hitTest(point, with: event)
-        if let childScrollClass = NSClassFromString("WKChildScrollView"),
-           let candidate = hitView, candidate.isKind(of: childScrollClass) {
-            for item in candidate.subviews.reversed() {
-                let converted = item.convert(point, from: self)
-                if let inner = item.hitTest(converted, with: event) {
-                    hitView = inner
-                    break
-                }
-            }
-        }
-        return hitView
-    }
-}
-
-// MARK: - View tree helpers
-
-extension UIView {
-    private static var allSubviews: [UIView] = []
-
-    private func viewArray(root: UIView) -> [UIView] {
-        var index = root.tag
-        for view in root.subviews {
-            if view.tag == SystemVolume.sliderTag { continue }
-            view.tag = index
-            UIView.allSubviews.append(view)
-            _ = viewArray(root: view)
-            index += 1
-        }
-        return UIView.allSubviews
-    }
-
-    func getAllSubViews() -> [UIView] {
-        UIView.allSubviews = []
-        return viewArray(root: self).reversed()
-    }
-
-    func removeAllSubview() {
-        subviews.forEach { $0.removeFromSuperview() }
-    }
-}
 
 // MARK: - JS bridging
 

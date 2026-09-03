@@ -14,22 +14,14 @@ export interface CreateVolumeSliderArgs {
 }
 
 /**
- * Custom element the native slider mounts into. On iOS it is given a scrollable
- * inner box so WKWebView materialises a child scroll view at the element's
- * dimensions — the native MPVolumeView is inserted into that subview. Same
- * compositing trick `@capacitor/google-maps` (and capacitor-plugin-apple-maps)
- * uses to overlay a native view on the webview.
+ * Placeholder element the native slider is positioned over. It only reserves
+ * layout space and reports its rect — the native MPVolumeView is overlaid on top
+ * of it as a webview subview (see the plugin's SystemVolume). Keep it visually
+ * empty and give it the width and height you want the slider to occupy.
  */
 class VolumeSliderElement extends HTMLElement {
   connectedCallback(): void {
     this.innerHTML = '';
-    if (Capacitor.getPlatform() === 'ios') {
-      this.style.overflow = 'scroll';
-      (this.style as unknown as Record<string, string>)['-webkit-overflow-scrolling'] = 'touch';
-      const overflowDiv = document.createElement('div');
-      overflowDiv.style.height = '200%';
-      this.appendChild(overflowDiv);
-    }
   }
 }
 

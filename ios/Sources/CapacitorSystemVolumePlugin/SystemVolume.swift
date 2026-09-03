@@ -5,20 +5,22 @@ import AVFoundation
 import Capacitor
 import WebKit
 
-/// One native system-volume slider, mounted into the webview's view tree.
+/// One native system-volume slider, overlaid on the webview.
 ///
 /// Wraps an `MPVolumeView` — Apple's own system-volume control — so dragging it
-/// sets the OS output volume and the hardware buttons move it. The mounting and
-/// frame-sync is the same compositing trick capacitor-plugin-apple-maps uses to
-/// overlay a native `MKMapView`; here the overlaid view is the volume slider.
+/// sets the OS output volume and the hardware buttons move it.
+///
+/// The slider is added as a plain top-level subview of the `WKWebView`, positioned
+/// at the bound element's rect. It is deliberately NOT mounted inside WebKit's
+/// child scroll view (the way a native map overlay is): an `MPVolumeView`'s slider
+/// tracks touches directly, and any scroll view between the finger and the control
+/// delays, cancels, or scrolls away that drag. A direct overlay keeps the touch
+/// path clean. The trade-off is that it does not clip or scroll with page content
+/// on its own — the host repositions it through the onScroll/onResize hooks.
 final class SystemVolume: NSObject {
-    /// Tag marking the mounted container so the view-tree walk skips it.
-    static let sliderTag = 99_981
-
     let id: String
     private weak var plugin: CAPPlugin?
     private let volumeView = MPVolumeView()
-    private var targetView: UIView?
     private var style: VolumeStyle
     private var volumeObservation: NSKeyValueObservation?
 
@@ -91,82 +93,21 @@ final class SystemVolume: NSObject {
         return AVAudioSession.sharedInstance().outputVolume
     }
 
-    // MARK: - Mounting (ported from capacitor-plugin-apple-maps)
+    // MARK: - Mounting
 
-    func mount(rect: CGRect) {
-        rebindTargetContainer(rect: rect)
-    }
-
-    func updateRender(rect: CGRect) {
+    /// Place the slider at `rect` (the bound element's CSS-pixel rect, which maps
+    /// 1:1 to the webview's point coordinates) as a top-level webview subview.
+    func setFrame(rect: CGRect) {
         runOnMain {
-            // WebKit can re-enable scrolling on the container across relayouts, so
-            // re-assert it every sync — otherwise a later drag scrolls the slider
-            // out of view again.
-            if let scrollView = self.targetView as? UIScrollView {
-                scrollView.isScrollEnabled = false
-                scrollView.contentOffset = .zero
+            guard let webView = self.plugin?.bridge?.webView else { return }
+            if self.volumeView.superview !== webView {
+                self.volumeView.removeFromSuperview()
+                webView.addSubview(self.volumeView)
             }
-            let widthEqual = round(Double(self.volumeView.bounds.width)) == round(Double(rect.width))
-            let heightEqual = round(Double(self.volumeView.bounds.height)) == round(Double(rect.height))
-            if !widthEqual || !heightEqual {
-                CATransaction.begin()
-                CATransaction.setDisableActions(true)
-                self.volumeView.frame.size = rect.size
-                CATransaction.commit()
-            }
+            // Keep it above the web content so it receives touches.
+            webView.bringSubviewToFront(self.volumeView)
+            self.volumeView.frame = rect
         }
-    }
-
-    func rebindTargetContainer(rect: CGRect) {
-        runOnMain {
-            let refWidth = round(Double(rect.width))
-            let refHeight = round(Double(rect.height))
-            guard let target = self.getTargetContainer(refWidth: refWidth, refHeight: refHeight) else { return }
-            self.targetView = target
-            target.tag = SystemVolume.sliderTag
-            target.removeAllSubview()
-            CATransaction.begin()
-            CATransaction.setDisableActions(true)
-            self.volumeView.frame = CGRect(origin: .zero, size: rect.size)
-            CATransaction.commit()
-            target.addSubview(self.volumeView)
-        }
-    }
-
-    /// Finds the WKWebView child scroll view whose content size matches the bound
-    /// element, so the slider can be mounted into it. Must run on the main thread.
-    private func getTargetContainer(refWidth: Double, refHeight: Double) -> UIView? {
-        guard let webView = plugin?.bridge?.webView else { return nil }
-        for item in webView.getAllSubViews() {
-            guard let scrollView = item as? UIScrollView else { continue }
-            let childScrollClass = NSClassFromString("WKChildScrollView")
-            let scrollClass = NSClassFromString("WKScrollView")
-            let isChildScroll = (childScrollClass.map { item.isKind(of: $0) } ?? false)
-                || (scrollClass.map { item.isKind(of: $0) } ?? false)
-            let isBridgeScroll = item.isEqual(webView.scrollView)
-            if isChildScroll && !isBridgeScroll {
-                scrollView.isScrollEnabled = true
-                let width = Double(scrollView.contentSize.width)
-                let height = Double(scrollView.contentSize.height)
-                let widthEqual = width == refWidth
-                let heightEqual = floor(height / 2) == refHeight || ceil(height / 2) == refHeight
-                if widthEqual && heightEqual && item.tag < (self.targetView?.tag ?? SystemVolume.sliderTag) {
-                    // The element is `overflow: scroll` ONLY so WebKit materialises
-                    // this child scroll view for the native slider to mount into —
-                    // it must not actually scroll. Left scrollable, a vertical drag
-                    // slides the slider up out of view (looks like it vanishes),
-                    // and the scroll gesture steals the slider's own drag. Disable
-                    // scrolling and let the UISlider own every touch.
-                    scrollView.isScrollEnabled = false
-                    scrollView.delaysContentTouches = false
-                    scrollView.canCancelContentTouches = false
-                    // Pin the content so a stray offset can't hide the slider.
-                    scrollView.contentOffset = .zero
-                    return item
-                }
-            }
-        }
-        return nil
     }
 
     func teardown() {
@@ -174,8 +115,6 @@ final class SystemVolume: NSObject {
             self.volumeObservation?.invalidate()
             self.volumeObservation = nil
             self.volumeView.removeFromSuperview()
-            self.targetView?.tag = 0
-            self.targetView = nil
         }
     }
 

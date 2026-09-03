@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Rework: the slider is now overlaid directly on the webview at the bound
+  element's rect, instead of being mounted inside WebKit's child scroll view.
+  The scroll-view mount (borrowed from native-map overlays) kept stealing or
+  scrolling away the `UISlider`'s drag — a map uses gesture recognizers, but a
+  slider tracks touches directly and needs a clean, scroll-view-free touch path.
+  As a plain top-level subview the drag works. The placeholder element no longer
+  needs `overflow: scroll`; the API is unchanged. Position still tracks the
+  element via the onScroll/onResize hooks.
+
 ## 0.1.2
 
 - Fix: the slider no longer scrolls out of view and drags now register. The

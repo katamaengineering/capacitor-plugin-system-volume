@@ -42,7 +42,7 @@ public class CapacitorSystemVolumePlugin: CAPPlugin, CAPBridgedPlugin {
             slider.onVolumeChange = { [weak self] value in
                 self?.notifyListeners("volumeChange", data: ["value": value])
             }
-            slider.mount(rect: rect)
+            slider.setFrame(rect: rect)
             self.sliders[id] = slider
             call.resolve()
         }
@@ -69,7 +69,13 @@ public class CapacitorSystemVolumePlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve()
     }
 
-    @objc func onResize(_ call: CAPPluginCall) {
+    // The slider is a direct webview overlay, so every position hook — resize,
+    // re-show, and page scroll — just repositions it to the element's new rect.
+    @objc func onResize(_ call: CAPPluginCall) { reposition(call) }
+    @objc func onDisplay(_ call: CAPPluginCall) { reposition(call) }
+    @objc func onScroll(_ call: CAPPluginCall) { reposition(call) }
+
+    private func reposition(_ call: CAPPluginCall) {
         guard let id = call.getString("id"), let slider = sliders[id] else {
             call.reject("slider not found")
             return
@@ -78,26 +84,7 @@ public class CapacitorSystemVolumePlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("rect is required")
             return
         }
-        slider.updateRender(rect: CGRect.fromJSObject(rectObj))
-        call.resolve()
-    }
-
-    @objc func onDisplay(_ call: CAPPluginCall) {
-        guard let id = call.getString("id"), let slider = sliders[id] else {
-            call.reject("slider not found")
-            return
-        }
-        guard let rectObj = call.getObject("rect") else {
-            call.reject("rect is required")
-            return
-        }
-        slider.rebindTargetContainer(rect: CGRect.fromJSObject(rectObj))
-        call.resolve()
-    }
-
-    @objc func onScroll(_ call: CAPPluginCall) {
-        // The slider is a subview inside the webview's own scroll view, so it
-        // tracks page scrolling automatically. Nothing to do.
+        slider.setFrame(rect: CGRect.fromJSObject(rectObj))
         call.resolve()
     }
 
