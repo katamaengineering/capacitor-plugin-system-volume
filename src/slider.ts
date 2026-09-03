@@ -45,9 +45,32 @@ export class VolumeSlider {
   private resizeObserver: ResizeObserver | null = null;
   private handleScrollEvent = (): void => this.updateBounds();
   private onVolumeChangeListener?: PluginListenerHandle;
+  private resyncTimers: ReturnType<typeof setTimeout>[] = [];
 
   private constructor(id: string) {
     this.id = id;
+  }
+
+  /** Re-measure the element and move the native overlay to match. */
+  private syncPosition = (): void => {
+    if (!this.element) return;
+    const r = this.element.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return;
+    void CapacitorSystemVolume.onScroll({ id: this.id, rect: VolumeSlider.rectFrom(r) });
+  };
+
+  // The rect passed to create() can be measured before layout has fully settled
+  // (web fonts, dvh-sized boxes, late image reflow). Those shifts change the
+  // element's POSITION but not its size, so the ResizeObserver misses them and
+  // fire no scroll/resize event — the overlay would sit stale until the user
+  // scrolled. Re-sync at a few beats after create so it corrects on its own.
+  private scheduleResync(): void {
+    requestAnimationFrame(this.syncPosition);
+    for (const ms of [100, 300, 600, 1000]) {
+      this.resyncTimers.push(setTimeout(this.syncPosition, ms));
+    }
+    window.addEventListener('load', this.syncPosition, { once: true });
+    void document.fonts?.ready?.then(this.syncPosition).catch(() => undefined);
   }
 
   static async create(options: CreateVolumeSliderArgs): Promise<VolumeSlider> {
@@ -83,24 +106,15 @@ export class VolumeSlider {
       window.addEventListener('resize', slider.handleScrollEvent);
     }
 
-    // Short settle so iOS WKWebView has materialised the element's child scroll
-    // view (from the `overflow: scroll` its connectedCallback set) before the
-    // native slider attaches to it.
-    await new Promise<void>((resolve, reject) => {
-      setTimeout(async () => {
-        try {
-          await CapacitorSystemVolume.create({
-            id: options.id,
-            rect,
-            style: options.style,
-            devicePixelRatio: window.devicePixelRatio,
-          });
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      }, 200);
+    await CapacitorSystemVolume.create({
+      id: options.id,
+      rect,
+      style: options.style,
+      devicePixelRatio: window.devicePixelRatio,
     });
+
+    // Correct the position after any late layout settling (see scheduleResync).
+    if (Capacitor.isNativePlatform()) slider.scheduleResync();
 
     return slider;
   }
@@ -137,10 +151,14 @@ export class VolumeSlider {
       window.removeEventListener('scroll', this.handleScrollEvent, true);
       window.removeEventListener('resize', this.handleScrollEvent);
     }
+    window.removeEventListener('load', this.syncPosition);
+    for (const t of this.resyncTimers) clearTimeout(t);
+    this.resyncTimers = [];
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     await this.onVolumeChangeListener?.remove();
     this.onVolumeChangeListener = undefined;
+    this.element = null;
     return CapacitorSystemVolume.destroy({ id: this.id });
   }
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+- Fix: the overlay could load in the wrong spot and only snap into place after a
+  scroll. The initial rect was measured before layout fully settled (web fonts,
+  `dvh`-sized boxes, late image reflow) — shifts that move the element without
+  changing its size, so nothing fired to reposition it. The overlay now re-syncs
+  its position on a few beats after create (next frame, fonts-ready, window load,
+  short timeouts).
+
 ## 0.2.0
 
 - Rework: the slider is now overlaid directly on the webview at the bound
