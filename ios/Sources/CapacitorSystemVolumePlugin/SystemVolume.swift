@@ -144,6 +144,12 @@ final class SystemVolume: NSObject {
                 let widthEqual = width == refWidth
                 let heightEqual = floor(height / 2) == refHeight || ceil(height / 2) == refHeight
                 if widthEqual && heightEqual && item.tag < (self.targetView?.tag ?? SystemVolume.sliderTag) {
+                    // The slider is a UISlider, which tracks touches directly. A
+                    // UIScrollView delays content touches and cancels them the
+                    // moment it reads a drag as a scroll, which steals every drag
+                    // from the slider. Turn both off so drags reach the slider.
+                    scrollView.delaysContentTouches = false
+                    scrollView.canCancelContentTouches = false
                     return item
                 }
             }
