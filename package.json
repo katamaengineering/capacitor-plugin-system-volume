@@ -1,0 +1,77 @@
+{
+  "name": "capacitor-plugin-system-volume",
+  "version": "0.1.0",
+  "description": "Capacitor plugin overlaying a native, stylable system-volume slider (MPVolumeView) on iOS, so an on-screen slider and the hardware volume buttons stay in sync.",
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "unpkg": "dist/plugin.js",
+  "files": [
+    "dist/",
+    "ios/Sources",
+    "ios/Tests",
+    "Package.swift",
+    "CapacitorPluginSystemVolume.podspec",
+    "CHANGELOG.md"
+  ],
+  "author": {
+    "name": "pjaudiomv"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pjaudiomv/capacitor-plugin-system-volume.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pjaudiomv/capacitor-plugin-system-volume/issues"
+  },
+  "keywords": [
+    "capacitor",
+    "capacitor-plugin",
+    "plugin",
+    "native",
+    "ios",
+    "volume",
+    "system-volume",
+    "mpvolumeview",
+    "hardware-volume",
+    "audio",
+    "ionic",
+    "cordova"
+  ],
+  "scripts": {
+    "verify": "npm run verify:web",
+    "verify:web": "npm run build",
+    "lint": "npm run eslint && npm run prettier -- --check",
+    "fmt": "npm run eslint -- --fix && npm run prettier -- --write",
+    "eslint": "eslint . --ext ts",
+    "prettier": "prettier \"**/*.{css,html,ts,js}\"",
+    "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
+    "clean": "rimraf ./dist",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@ionic/eslint-config": "^0.4.0",
+    "@ionic/prettier-config": "^4.0.0",
+    "eslint": "^8.57.1",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.1.0",
+    "rollup": "^4.53.2",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  },
+  "prettier": "@ionic/prettier-config",
+  "eslintConfig": {
+    "extends": "@ionic/eslint-config/recommended"
+  },
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  }
+}
