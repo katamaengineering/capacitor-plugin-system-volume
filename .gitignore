@@ -2,6 +2,9 @@
 dist
 node_modules
 
+# generated docs site (built in CI, deployed to GitHub Pages)
+site
+
 # iOS files
 Pods
 Podfile.lock
@@ -25,3 +28,7 @@ DerivedData/
 
 # Logs
 *.log
+
+# Local working notes
+COMMUNITY_SUBMISSION.md
+IMPROVEMENTS.md
