@@ -17,11 +17,19 @@ export class CapacitorSystemVolumeWeb extends WebPlugin implements CapacitorSyst
     this.notAvailable();
   }
 
+  async createRoutePicker(): Promise<void> {
+    this.notAvailable();
+  }
+
   async destroy(): Promise<void> {
     this.notAvailable();
   }
 
   async setStyle(): Promise<void> {
+    this.notAvailable();
+  }
+
+  async setRoutePickerStyle(): Promise<void> {
     this.notAvailable();
   }
 

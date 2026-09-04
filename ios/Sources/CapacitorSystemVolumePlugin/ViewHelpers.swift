@@ -2,6 +2,16 @@ import Foundation
 import UIKit
 import Capacitor
 
+// MARK: - Overlay protocol
+//
+// A native view overlaid on the webview at a bound element's rect. Both the
+// volume slider and the AirPlay route button are overlays; the plugin positions
+// and tears them down through this without caring which kind it is.
+protocol WebOverlay: AnyObject {
+    func setFrame(rect: CGRect)
+    func teardown()
+}
+
 // MARK: - JS bridging
 
 extension CGRect {

@@ -1,6 +1,6 @@
 {
   "name": "capacitor-plugin-system-volume",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Capacitor plugin overlaying a native, stylable system-volume slider (MPVolumeView) on iOS, so an on-screen slider and the hardware volume buttons stay in sync.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

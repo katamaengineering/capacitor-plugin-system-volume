@@ -16,7 +16,17 @@ export interface VolumeSliderStyle {
   thumbRadius?: number;
 }
 
-/** The rectangle the native slider should occupy, in CSS pixels. */
+/**
+ * Appearance for the native AirPlay route button. Colours are CSS hex strings.
+ */
+export interface RoutePickerStyle {
+  /** The AirPlay glyph when no external route is active. Defaults to the system tint. */
+  tintColor?: string;
+  /** The glyph when a route (AirPlay/Bluetooth) is active. Defaults to the system accent. */
+  activeTintColor?: string;
+}
+
+/** The rectangle a native overlay should occupy, in CSS pixels. */
 export interface VolumeSliderRect {
   x: number;
   y: number;
@@ -37,11 +47,17 @@ export interface CapacitorSystemVolumePlugin {
     devicePixelRatio?: number;
   }): Promise<void>;
 
-  /** Tear down the slider with this `id`. */
+  /** Mount a native AirPlay route button bound to the element at `rect`. */
+  createRoutePicker(options: { id: string; rect: VolumeSliderRect; style?: RoutePickerStyle }): Promise<void>;
+
+  /** Tear down the overlay (slider or route button) with this `id`. */
   destroy(options: { id: string }): Promise<void>;
 
   /** Restyle an existing slider. */
   setStyle(options: { id: string; style: VolumeSliderStyle }): Promise<void>;
+
+  /** Restyle an existing route button. */
+  setRoutePickerStyle(options: { id: string; style: RoutePickerStyle }): Promise<void>;
 
   /** @internal Frame-sync hooks, driven by the {@link VolumeSlider} wrapper. */
   onResize(options: { id: string; rect: VolumeSliderRect }): Promise<void>;

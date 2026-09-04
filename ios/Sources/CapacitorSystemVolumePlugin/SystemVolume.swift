@@ -17,7 +17,7 @@ import WebKit
 /// delays, cancels, or scrolls away that drag. A direct overlay keeps the touch
 /// path clean. The trade-off is that it does not clip or scroll with page content
 /// on its own — the host repositions it through the onScroll/onResize hooks.
-final class SystemVolume: NSObject {
+final class SystemVolume: NSObject, WebOverlay {
     let id: String
     private weak var plugin: CAPPlugin?
     private let volumeView = MPVolumeView()

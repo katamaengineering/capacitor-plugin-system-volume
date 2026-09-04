@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Add `RoutePicker`: a native AirPlay route button (`AVRoutePickerView`) overlaid
+  on a `<capacitor-airplay-button>` placeholder, tintable to your accent. Tapping
+  it opens the system output-route picker (AirPlay, Bluetooth, …) — Apple handles
+  the picker, nothing to wire from JS. Shares the volume slider's overlay
+  positioning. The `VolumeSlider` API is unchanged.
+
 ## 0.2.1
 
 - Fix: the overlay could load in the wrong spot and only snap into place after a
